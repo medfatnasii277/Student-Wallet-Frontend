@@ -22,35 +22,48 @@ const Login = () => {
   };
 
   return (
-    <div className="container-fluid d-flex justify-content-center align-items-center" style={{ minHeight: '100vh', backgroundColor: '#f8f9fa' }}>
-      <div className="card" style={{ width: '100%', maxWidth: '400px' }}>
-        <div className="card-body">
-          <h3 className="card-title">Login</h3>
-          {error && <div className="alert alert-danger">{error}</div>}
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="mb-3">
-              <label className="form-label">Username</label>
-              <input
-                type="text"
-                className="form-control"
-                {...register('username')}
-                required
-              />
-            </div>
-            <div className="mb-3">
-              <label className="form-label">Password</label>
-              <input
-                type="password"
-                className="form-control"
-                {...register('password')}
-                required
-              />
-            </div>
-            <button type="submit" className="btn btn-primary w-100">Login</button>
-          </form>
-          <div className="mt-3 text-center">
-            <p>Don't have an account? <Link to="/signup">Sign Up</Link></p>
+    <div className="main-content">
+      <div className="auth-container">
+        <div className="auth-header">
+          <h1>Welcome Back!</h1>
+          <p>Sign in to access your student wallet</p>
+        </div>
+        {error && (
+          <div style={{ 
+            backgroundColor: 'var(--danger)', 
+            color: 'white', 
+            padding: 'var(--spacing-md)',
+            borderRadius: 'var(--radius-md)',
+            marginBottom: 'var(--spacing-md)'
+          }}>
+            {error}
           </div>
+        )}
+        <form className="auth-form" onSubmit={handleSubmit(onSubmit)}>
+          <div className="form-group">
+            <label className="form-label">Username</label>
+            <input
+              type="text"
+              className="form-input"
+              {...register('username')}
+              required
+              placeholder="Enter your username"
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Password</label>
+            <input
+              type="password"
+              className="form-input"
+              {...register('password')}
+              required
+              placeholder="Enter your password"
+            />
+          </div>
+          <button type="submit" className="btn-primary">Sign In</button>
+        </form>
+        <div style={{ marginTop: 'var(--spacing-lg)', textAlign: 'center' }}>
+          <p>Don't have an account? <Link to="/signup" className="nav-link">Sign Up</Link></p>
         </div>
       </div>
     </div>
