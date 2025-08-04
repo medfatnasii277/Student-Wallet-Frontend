@@ -8,6 +8,7 @@ const Dashboard = () => {
   const [username, setUsername] = useState<string>("");
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [isUploading, setIsUploading] = useState(false);
 
   const fetchFiles = async (pageNumber: number) => {
     try {
@@ -43,6 +44,7 @@ const Dashboard = () => {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
       setSelectedFile(event.target.files[0]);
+      console.log("File selected:", event.target.files[0].name);
     }
   };
 
@@ -52,16 +54,23 @@ const Dashboard = () => {
       return;
     }
 
+    console.log("Starting upload for file:", selectedFile.name);
+    setIsUploading(true);
     const formData = new FormData();
     formData.append("file", selectedFile);
 
     try {
-      await api.post("/upload", formData, { headers: { "Content-Type": "multipart/form-data" } });
+      console.log("Sending POST request to /upload");
+      const response = await api.post("/upload", formData, { headers: { "Content-Type": "multipart/form-data" } });
+      console.log("Upload response:", response);
       alert("File uploaded successfully!");
+      setSelectedFile(null); // Clear selected file after upload
       fetchFiles(page);
     } catch (err) {
       console.error("Error uploading file", err);
       alert("File upload failed.");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -211,6 +220,42 @@ const Dashboard = () => {
               Upload your educational files and documents
             </p>
           </div>
+          
+          {selectedFile && (
+            <div style={{ 
+              marginTop: 'var(--spacing-md)',
+              padding: 'var(--spacing-md)',
+              backgroundColor: 'var(--background)',
+              borderRadius: 'var(--radius-md)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <span style={{ 
+                color: 'var(--text-primary)',
+                fontSize: '0.875rem'
+              }}>
+                Selected: {selectedFile.name}
+              </span>
+              <button
+                onClick={handleUpload}
+                disabled={isUploading}
+                style={{
+                  padding: 'var(--spacing-sm) var(--spacing-md)',
+                  backgroundColor: isUploading ? 'var(--border)' : 'var(--primary)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 'var(--radius-sm)',
+                  cursor: isUploading ? 'not-allowed' : 'pointer',
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
+                  opacity: isUploading ? 0.6 : 1
+                }}
+              >
+                {isUploading ? 'Uploading...' : 'Upload File'}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Files Grid */}
