@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import api from "../services/api";
+import ProfileModal from "../components/ProfileModal";
 
 const Dashboard = () => {
   const [files, setFiles] = useState<any[]>([]);
@@ -9,6 +10,7 @@ const Dashboard = () => {
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [isUploading, setIsUploading] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   const fetchFiles = async (pageNumber: number) => {
     try {
@@ -40,6 +42,23 @@ const Dashboard = () => {
 
     fetchProfileData();
   }, []);
+
+  const handleProfileUpdate = () => {
+    // Refresh profile picture when profile is updated
+    const fetchProfileData = async () => {
+      try {
+        const response = await api.get("/profile-picture");
+        setUsername(response.data.username);
+
+        if (response.data.profilePicture) {
+          setProfilePic(`data:image/png;base64,${response.data.profilePicture}`);
+        }
+      } catch (err) {
+        console.error("Error fetching profile picture", err);
+      }
+    };
+    fetchProfileData();
+  };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
@@ -128,15 +147,26 @@ const Dashboard = () => {
             <img
               src={profilePic}
               alt="Profile"
+              onClick={() => setIsProfileModalOpen(true)}
               style={{ 
                 width: "32px", 
                 height: "32px", 
                 borderRadius: "50%", 
-                objectFit: "cover"
+                objectFit: "cover",
+                cursor: "pointer",
+                border: "2px solid transparent",
+                transition: "border-color 0.2s ease"
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = "var(--primary)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = "transparent";
               }}
             />
           ) : (
             <div
+              onClick={() => setIsProfileModalOpen(true)}
               style={{ 
                 width: "32px", 
                 height: "32px", 
@@ -145,7 +175,16 @@ const Dashboard = () => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '1rem'
+                fontSize: '1rem',
+                cursor: "pointer",
+                border: "2px solid transparent",
+                transition: "border-color 0.2s ease"
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = "var(--primary)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = "transparent";
               }}
             >
               👤
@@ -188,7 +227,8 @@ const Dashboard = () => {
             padding: 'var(--spacing-xl)',
             textAlign: 'center',
             cursor: 'pointer',
-            transition: 'all 0.2s ease'
+            transition: 'all 0.2s ease',
+            position: 'relative'
           }}>
             <input 
               type="file" 
@@ -200,7 +240,8 @@ const Dashboard = () => {
                 top: 0,
                 left: 0,
                 opacity: 0,
-                cursor: 'pointer'
+                cursor: 'pointer',
+                zIndex: 1
               }}
             />
             <div style={{ fontSize: '2rem', marginBottom: 'var(--spacing-md)' }}>📁</div>
@@ -229,7 +270,9 @@ const Dashboard = () => {
               borderRadius: 'var(--radius-md)',
               display: 'flex',
               justifyContent: 'space-between',
-              alignItems: 'center'
+              alignItems: 'center',
+              position: 'relative',
+              zIndex: 2
             }}>
               <span style={{ 
                 color: 'var(--text-primary)',
@@ -249,7 +292,9 @@ const Dashboard = () => {
                   cursor: isUploading ? 'not-allowed' : 'pointer',
                   fontSize: '0.875rem',
                   fontWeight: 500,
-                  opacity: isUploading ? 0.6 : 1
+                  opacity: isUploading ? 0.6 : 1,
+                  position: 'relative',
+                  zIndex: 3
                 }}
               >
                 {isUploading ? 'Uploading...' : 'Upload File'}
@@ -454,6 +499,13 @@ const Dashboard = () => {
           )}
         </div>
       </div>
+
+      {/* Profile Modal */}
+      <ProfileModal 
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        onProfileUpdate={handleProfileUpdate}
+      />
     </div>
   );
 };
