@@ -7,10 +7,17 @@ interface Room {
   isPrivate: boolean;
   creatorUsername: string;
   memberCount: number;
+  isCurrentUserMember: boolean;
+}
+
+interface Student {
+  id: number;
+  username: string;
+  email: string;
 }
 
 interface ChatRoomsProps {
-  onRoomSelect: (room: Room) => void;
+  onRoomSelect: (room: Room | null) => void;
   selectedRoom: Room | null;
 }
 
@@ -18,7 +25,11 @@ const ChatRooms: React.FC<ChatRoomsProps> = ({ onRoomSelect, selectedRoom }) => 
   const [rooms, setRooms] = useState<Room[]>([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
+  const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
   const [selectedRoomToJoin, setSelectedRoomToJoin] = useState<Room | null>(null);
+  const [selectedRoomForMembers, setSelectedRoomForMembers] = useState<Room | null>(null);
+  const [roomMembers, setRoomMembers] = useState<Student[]>([]);
+  const [currentUsername, setCurrentUsername] = useState<string>('');
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -27,20 +38,25 @@ const ChatRooms: React.FC<ChatRoomsProps> = ({ onRoomSelect, selectedRoom }) => 
   });
   const [joinPassword, setJoinPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [userMemberships, setUserMemberships] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     fetchRooms();
+    fetchCurrentUsername();
   }, []);
+
+  const fetchCurrentUsername = async () => {
+    try {
+      const response = await api.get('/profile-picture');
+      setCurrentUsername(response.data.username);
+    } catch (error) {
+      console.error('Error fetching username:', error);
+    }
+  };
 
   const fetchRooms = async () => {
     try {
       const response = await api.get('/rooms');
       setRooms(response.data);
-      
-      // Initialize memberships as empty - we'll update this when user actually joins rooms
-      // This prevents the "must join first" error that was happening before
-      setUserMemberships(new Set());
     } catch (error) {
       console.error('Error fetching rooms:', error);
     }
@@ -75,9 +91,6 @@ const ChatRooms: React.FC<ChatRoomsProps> = ({ onRoomSelect, selectedRoom }) => 
       const joinData = password ? { password } : {};
       await api.post(`/rooms/${room.id}/join`, joinData);
       
-      // Add room to user memberships after successful join
-      setUserMemberships(prev => new Set([...prev, room.id]));
-      
       setIsJoinModalOpen(false);
       setJoinPassword('');
       setSelectedRoomToJoin(null);
@@ -86,6 +99,49 @@ const ChatRooms: React.FC<ChatRoomsProps> = ({ onRoomSelect, selectedRoom }) => 
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Failed to join room';
       alert(errorMessage);
+    }
+  };
+
+  const handleDeleteRoom = async (room: Room) => {
+    if (!confirm(`Are you sure you want to delete "${room.name}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await api.delete(`/rooms/${room.id}`);
+      fetchRooms();
+      if (selectedRoom?.id === room.id) {
+        onRoomSelect(null);
+      }
+    } catch (error: any) {
+      alert(error.response?.data?.message || 'Failed to delete room');
+    }
+  };
+
+  const handleLeaveRoom = async (room: Room) => {
+    if (!confirm(`Are you sure you want to leave "${room.name}"?`)) {
+      return;
+    }
+
+    try {
+      await api.post(`/rooms/${room.id}/leave`);
+      fetchRooms();
+      if (selectedRoom?.id === room.id) {
+        onRoomSelect(null);
+      }
+    } catch (error: any) {
+      alert(error.response?.data?.message || 'Failed to leave room');
+    }
+  };
+
+  const handleViewMembers = async (room: Room) => {
+    try {
+      const response = await api.get(`/rooms/${room.id}/members`);
+      setRoomMembers(response.data);
+      setSelectedRoomForMembers(room);
+      setIsMembersModalOpen(true);
+    } catch (error: any) {
+      alert(error.response?.data?.message || 'Failed to fetch room members');
     }
   };
 
@@ -219,17 +275,64 @@ const ChatRooms: React.FC<ChatRoomsProps> = ({ onRoomSelect, selectedRoom }) => 
                     👥 {room.memberCount} members
                   </span>
                   
-                  {userMemberships.has(room.id) ? (
-                    <span style={{
-                      padding: 'var(--spacing-xs) var(--spacing-sm)',
-                      backgroundColor: 'var(--success)',
-                      color: 'white',
-                      borderRadius: 'var(--radius-sm)',
-                      fontSize: '0.75rem',
-                      fontWeight: 500
-                    }}>
-                      ✓ Member
-                    </span>
+                  {room.isCurrentUserMember ? (
+                    <div style={{ display: 'flex', gap: 'var(--spacing-xs)' }}>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleViewMembers(room);
+                        }}
+                        style={{
+                          padding: 'var(--spacing-xs) var(--spacing-sm)',
+                          backgroundColor: 'var(--info)',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: 'var(--radius-sm)',
+                          cursor: 'pointer',
+                          fontSize: '0.75rem'
+                        }}
+                      >
+                        View Members
+                      </button>
+                      
+                      {currentUsername === room.creatorUsername ? (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteRoom(room);
+                          }}
+                          style={{
+                            padding: 'var(--spacing-xs) var(--spacing-sm)',
+                            backgroundColor: 'var(--danger)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: 'var(--radius-sm)',
+                            cursor: 'pointer',
+                            fontSize: '0.75rem'
+                          }}
+                        >
+                          Delete
+                        </button>
+                      ) : (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleLeaveRoom(room);
+                          }}
+                          style={{
+                            padding: 'var(--spacing-xs) var(--spacing-sm)',
+                            backgroundColor: 'var(--warning)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: 'var(--radius-sm)',
+                            cursor: 'pointer',
+                            fontSize: '0.75rem'
+                          }}
+                        >
+                          Leave
+                        </button>
+                      )}
+                    </div>
                   ) : (
                     <>
                       {!room.isPrivate && (
@@ -552,6 +655,123 @@ const ChatRooms: React.FC<ChatRoomsProps> = ({ onRoomSelect, selectedRoom }) => 
                 }}
               >
                 Join Room
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Room Members Modal */}
+      {isMembersModalOpen && selectedRoomForMembers && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'var(--surface)',
+            borderRadius: 'var(--radius-lg)',
+            padding: 'var(--spacing-xl)',
+            width: '90%',
+            maxWidth: '500px',
+            border: '1px solid var(--border)',
+            maxHeight: '80vh',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            <h3 style={{
+              margin: '0 0 var(--spacing-lg) 0',
+              fontSize: '1.25rem',
+              fontWeight: 500,
+              color: 'var(--text-primary)'
+            }}>
+              Room Members - {selectedRoomForMembers.name}
+            </h3>
+            
+            <div style={{ flex: 1, overflowY: 'auto', marginBottom: 'var(--spacing-lg)' }}>
+              {roomMembers.length === 0 ? (
+                <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
+                  No members found
+                </p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
+                  {roomMembers.map((member) => (
+                    <div
+                      key={member.id}
+                      style={{
+                        padding: 'var(--spacing-sm) var(--spacing-md)',
+                        backgroundColor: 'var(--background)',
+                        borderRadius: 'var(--radius-md)',
+                        border: '1px solid var(--border)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}
+                    >
+                      <div>
+                        <div style={{
+                          fontSize: '0.875rem',
+                          fontWeight: 500,
+                          color: 'var(--text-primary)'
+                        }}>
+                          {member.username}
+                        </div>
+                        <div style={{
+                          fontSize: '0.75rem',
+                          color: 'var(--text-secondary)'
+                        }}>
+                          {member.email}
+                        </div>
+                      </div>
+                      
+                      {member.username === selectedRoomForMembers.creatorUsername && (
+                        <span style={{
+                          backgroundColor: 'var(--primary)',
+                          color: 'white',
+                          padding: '2px 6px',
+                          borderRadius: 'var(--radius-sm)',
+                          fontSize: '0.625rem',
+                          fontWeight: 500
+                        }}>
+                          Creator
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            <div style={{
+              display: 'flex',
+              justifyContent: 'flex-end'
+            }}>
+              <button
+                onClick={() => {
+                  setIsMembersModalOpen(false);
+                  setSelectedRoomForMembers(null);
+                  setRoomMembers([]);
+                }}
+                style={{
+                  padding: 'var(--spacing-sm) var(--spacing-md)',
+                  backgroundColor: 'var(--primary)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 'var(--radius-md)',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem',
+                  fontWeight: 500
+                }}
+              >
+                Close
               </button>
             </div>
           </div>

@@ -28,6 +28,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ room, onBack }) => {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [isMember, setIsMember] = useState<boolean | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [username, setUsername] = useState('');
 
@@ -55,8 +56,19 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ room, onBack }) => {
     try {
       const response = await api.get(`/rooms/${room.id}/messages/latest`);
       setMessages(response.data.reverse()); // Show oldest first
-    } catch (error) {
+      setIsMember(true);
+    } catch (error: any) {
       console.error('Error fetching messages:', error);
+      
+      // If user can't access messages (not a member), show appropriate message
+      if (error.response?.data?.message?.includes('must join')) {
+        setMessages([]);
+        setIsMember(false);
+        // Don't show error alert here, just log it
+      } else {
+        setIsMember(null);
+        alert('Failed to fetch messages: ' + (error.response?.data?.message || 'Unknown error'));
+      }
     }
   };
 
@@ -266,41 +278,92 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ room, onBack }) => {
         padding: 'var(--spacing-lg)',
         borderTop: '1px solid var(--border)'
       }}>
-        <form onSubmit={handleSendMessage} style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
-          <input
-            type="text"
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Type your message..."
-            disabled={loading}
-            style={{
-              flex: 1,
-              padding: 'var(--spacing-sm) var(--spacing-md)',
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--radius-md)',
-              fontSize: '0.875rem',
-              backgroundColor: 'var(--background)',
-              color: 'var(--text-primary)'
-            }}
-          />
-          <button
-            type="submit"
-            disabled={loading || !newMessage.trim()}
-            style={{
-              padding: 'var(--spacing-sm) var(--spacing-md)',
-              backgroundColor: loading || !newMessage.trim() ? 'var(--border)' : 'var(--primary)',
-              color: 'white',
-              border: 'none',
-              borderRadius: 'var(--radius-md)',
-              cursor: loading || !newMessage.trim() ? 'not-allowed' : 'pointer',
-              fontSize: '0.875rem',
-              fontWeight: 500,
-              minWidth: '80px'
-            }}
-          >
-            {loading ? 'Sending...' : 'Send'}
-          </button>
-        </form>
+        {isMember === false ? (
+          <div style={{
+            textAlign: 'center',
+            padding: 'var(--spacing-md)',
+            backgroundColor: 'var(--warning-light)',
+            borderRadius: 'var(--radius-md)',
+            border: '1px solid var(--warning)'
+          }}>
+            <p style={{
+              margin: '0 0 var(--spacing-sm) 0',
+              color: 'var(--warning-dark)',
+              fontSize: '0.875rem'
+            }}>
+              🔒 You need to join this room to send messages
+            </p>
+            {!room.isPrivate ? (
+              <button
+                onClick={async () => {
+                  try {
+                    await api.post(`/rooms/${room.id}/join`, {});
+                    alert('Successfully joined the room! You can now send messages.');
+                    fetchMessages();
+                  } catch (error: any) {
+                    alert('Failed to join room: ' + (error.response?.data?.message || 'Unknown error'));
+                  }
+                }}
+                style={{
+                  padding: 'var(--spacing-sm) var(--spacing-md)',
+                  backgroundColor: 'var(--primary)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 'var(--radius-md)',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem',
+                  fontWeight: 500
+                }}
+              >
+                Join Room
+              </button>
+            ) : (
+              <p style={{
+                margin: 0,
+                color: 'var(--warning-dark)',
+                fontSize: '0.75rem'
+              }}>
+                This is a private room. You need to join with a password first.
+              </p>
+            )}
+          </div>
+        ) : (
+          <form onSubmit={handleSendMessage} style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+            <input
+              type="text"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              placeholder="Type your message..."
+              disabled={loading}
+              style={{
+                flex: 1,
+                padding: 'var(--spacing-sm) var(--spacing-md)',
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--radius-md)',
+                fontSize: '0.875rem',
+                backgroundColor: 'var(--background)',
+                color: 'var(--text-primary)'
+              }}
+            />
+            <button
+              type="submit"
+              disabled={loading || !newMessage.trim()}
+              style={{
+                padding: 'var(--spacing-sm) var(--spacing-md)',
+                backgroundColor: loading || !newMessage.trim() ? 'var(--border)' : 'var(--primary)',
+                color: 'white',
+                border: 'none',
+                borderRadius: 'var(--radius-md)',
+                cursor: loading || !newMessage.trim() ? 'not-allowed' : 'pointer',
+                fontSize: '0.875rem',
+                fontWeight: 500,
+                minWidth: '80px'
+              }}
+            >
+              {loading ? 'Sending...' : 'Send'}
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );
