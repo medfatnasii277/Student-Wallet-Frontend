@@ -3,6 +3,7 @@ import api from "../services/api";
 import ProfileModal from "../components/ProfileModal";
 import ChatRooms from "../components/ChatRooms";
 import ChatRoom from "../components/ChatRoom";
+import DocumentList from "../components/DocumentList";
 
 const Dashboard = () => {
   const [files, setFiles] = useState<any[]>([]);
@@ -202,6 +203,45 @@ const Dashboard = () => {
               👤
             </div>
           )}
+          
+          {/* Notification Center */}
+          <div style={{
+            position: 'relative',
+            cursor: 'pointer',
+            padding: '8px',
+            borderRadius: '50%',
+            backgroundColor: 'var(--surface)',
+            border: '1px solid var(--border)',
+            transition: 'all 0.2s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--background)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--surface)';
+          }}
+          >
+            🔔
+            {/* Notification Badge */}
+            <div style={{
+              position: 'absolute',
+              top: '-2px',
+              right: '-2px',
+              backgroundColor: '#dc3545',
+              color: 'white',
+              borderRadius: '50%',
+              width: '16px',
+              height: '16px',
+              fontSize: '10px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: '2px solid var(--surface)'
+            }}>
+              0
+            </div>
+          </div>
+          
           <button 
             onClick={handleLogout}
             style={{
@@ -212,7 +252,7 @@ const Dashboard = () => {
               color: 'var(--text-primary)',
               cursor: 'pointer',
               fontSize: '0.875rem',
-              fontWeight: 500
+              fontWeight: '500'
             }}
           >
             Logout
@@ -269,311 +309,14 @@ const Dashboard = () => {
         {/* Files Tab */}
         {activeTab === 'files' && (
           <>
-            {/* Upload Section */}
             <div style={{
               backgroundColor: 'var(--surface)',
               borderRadius: 'var(--radius-lg)',
               padding: 'var(--spacing-xl)',
-              marginBottom: 'var(--spacing-xl)',
-              border: '1px solid var(--border)'
+              border: '1px solid var(--border)',
+              marginBottom: 'var(--spacing-xl)'
             }}>
-              <div style={{ 
-                border: '2px dashed var(--border)',
-                borderRadius: 'var(--radius-md)',
-                padding: 'var(--spacing-xl)',
-                textAlign: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                position: 'relative'
-              }}>
-                <input 
-                  type="file" 
-                  onChange={handleFileChange}
-                  style={{ 
-                    position: 'absolute',
-                    width: '100%',
-                    height: '100%',
-                    top: 0,
-                    left: 0,
-                    opacity: 0,
-                    cursor: 'pointer',
-                    zIndex: 1
-                  }}
-                />
-                <div style={{ fontSize: '2rem', marginBottom: 'var(--spacing-md)' }}>📁</div>
-                <h3 style={{ 
-                  margin: 0, 
-                  color: 'var(--text-primary)',
-                  fontSize: '1.25rem',
-                  fontWeight: 500
-                }}>
-                  Drag files here or click to upload
-                </h3>
-                <p style={{ 
-                  margin: 'var(--spacing-sm) 0 0 0', 
-                  color: 'var(--text-secondary)',
-                  fontSize: '0.875rem'
-                }}>
-                  Upload your educational files and documents
-                </p>
-              </div>
-              
-              {selectedFile && (
-                <div style={{ 
-                  marginTop: 'var(--spacing-md)',
-                  padding: 'var(--spacing-md)',
-                  backgroundColor: 'var(--background)',
-                  borderRadius: 'var(--radius-md)',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  position: 'relative',
-                  zIndex: 2
-                }}>
-                  <span style={{ 
-                    color: 'var(--text-primary)',
-                    fontSize: '0.875rem'
-                  }}>
-                    Selected: {selectedFile.name}
-                  </span>
-                  <button
-                    onClick={handleUpload}
-                    disabled={isUploading}
-                    style={{
-                      padding: 'var(--spacing-sm) var(--spacing-md)',
-                      backgroundColor: isUploading ? 'var(--border)' : 'var(--primary)',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: 'var(--radius-sm)',
-                      cursor: isUploading ? 'not-allowed' : 'pointer',
-                      fontSize: '0.875rem',
-                      fontWeight: 500,
-                      opacity: isUploading ? 0.6 : 1,
-                      position: 'relative',
-                      zIndex: 3
-                    }}
-                  >
-                    {isUploading ? 'Uploading...' : 'Upload File'}
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Files Grid */}
-            <div style={{ marginBottom: 'var(--spacing-xl)' }}>
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center',
-                marginBottom: 'var(--spacing-lg)'
-              }}>
-                <h2 style={{ 
-                  margin: 0, 
-                  fontSize: '1.25rem',
-                  fontWeight: 500,
-                  color: 'var(--text-primary)'
-                }}>
-                  My Files
-                </h2>
-                <div style={{ 
-                  display: 'flex', 
-                  gap: 'var(--spacing-sm)',
-                  color: 'var(--text-secondary)',
-                  fontSize: '0.875rem'
-                }}>
-                  <span>{files.length} items</span>
-                  <span>•</span>
-                  <span>{files.reduce((acc, file) => acc + (file.docTag?.length || 0), 0)} tags</span>
-                </div>
-              </div>
-
-              {files.length > 0 ? (
-                <div style={{ 
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-                  gap: 'var(--spacing-md)'
-                }}>
-                  {files.map((file: any) => (
-                    <div 
-                      key={file.id} 
-                      style={{
-                        backgroundColor: 'var(--surface)',
-                        borderRadius: 'var(--radius-md)',
-                        padding: 'var(--spacing-md)',
-                        border: '1px solid var(--border)',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-2px)';
-                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0)';
-                        e.currentTarget.style.boxShadow = 'none';
-                      }}
-                    >
-                      <div style={{ 
-                        fontSize: '2rem', 
-                        marginBottom: 'var(--spacing-sm)',
-                        textAlign: 'center'
-                      }}>
-                        📄
-                      </div>
-                      <h4 style={{ 
-                        margin: '0 0 var(--spacing-sm) 0',
-                        fontSize: '0.875rem',
-                        fontWeight: 500,
-                        color: 'var(--text-primary)',
-                        textAlign: 'center',
-                        wordBreak: 'break-word'
-                      }}>
-                        {file.name}
-                      </h4>
-                      <div style={{ 
-                        fontSize: '0.75rem',
-                        color: 'var(--text-secondary)',
-                        textAlign: 'center',
-                        marginBottom: 'var(--spacing-sm)'
-                      }}>
-                        {new Date(file.uploadDate).toLocaleDateString()}
-                      </div>
-                      {file.docTag && file.docTag.length > 0 && (
-                        <div style={{ 
-                          display: 'flex', 
-                          flexWrap: 'wrap',
-                          gap: 'var(--spacing-xs)',
-                          marginBottom: 'var(--spacing-sm)',
-                          justifyContent: 'center'
-                        }}>
-                          {file.docTag.map((tag: any, index: number) => (
-                            <span 
-                              key={index}
-                              style={{
-                                backgroundColor: 'var(--primary)',
-                                color: 'white',
-                                padding: '2px 6px',
-                                borderRadius: 'var(--radius-sm)',
-                                fontSize: '0.625rem',
-                                fontWeight: 500
-                              }}
-                            >
-                              {tag.name}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                      <div style={{ display: 'flex', gap: 'var(--spacing-xs)' }}>
-                        <button 
-                          onClick={() => handleDownload(file.id, file.name)}
-                          style={{
-                            flex: 1,
-                            padding: 'var(--spacing-xs) var(--spacing-sm)',
-                            backgroundColor: 'var(--primary)',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: 'var(--radius-sm)',
-                            fontSize: '0.75rem',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease'
-                          }}
-                        >
-                          Download
-                        </button>
-                        <button 
-                          onClick={() => handleDelete(file.id)}
-                          style={{
-                            padding: 'var(--spacing-xs) var(--spacing-sm)',
-                            backgroundColor: 'var(--danger)',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: 'var(--radius-sm)',
-                            fontSize: '0.75rem',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease'
-                          }}
-                        >
-                          🗑️
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div style={{ 
-                  textAlign: 'center', 
-                  padding: 'var(--spacing-xl)',
-                  backgroundColor: 'var(--surface)',
-                  borderRadius: 'var(--radius-lg)',
-                  border: '1px solid var(--border)'
-                }}>
-                  <div style={{ fontSize: '3rem', marginBottom: 'var(--spacing-md)' }}>📁</div>
-                  <h3 style={{ 
-                    margin: 0, 
-                    color: 'var(--text-primary)',
-                    fontSize: '1.25rem',
-                    fontWeight: 500
-                  }}>
-                    No files yet
-                  </h3>
-                  <p style={{ 
-                    margin: 'var(--spacing-sm) 0 0 0', 
-                    color: 'var(--text-secondary)',
-                    fontSize: '0.875rem'
-                  }}>
-                    Upload your first file to get started
-                  </p>
-                </div>
-              )}
-
-              {files.length > 0 && (
-                <div style={{ 
-                  display: 'flex', 
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  gap: 'var(--spacing-md)',
-                  marginTop: 'var(--spacing-xl)'
-                }}>
-                  <button
-                    onClick={() => setPage((prev) => Math.max(prev - 1, 0))}
-                    disabled={page === 0}
-                    style={{
-                      padding: 'var(--spacing-sm) var(--spacing-md)',
-                      backgroundColor: 'var(--surface)',
-                      border: '1px solid var(--border)',
-                      borderRadius: 'var(--radius-md)',
-                      color: 'var(--text-primary)',
-                      cursor: page === 0 ? 'not-allowed' : 'pointer',
-                      opacity: page === 0 ? 0.5 : 1
-                    }}
-                  >
-                    Previous
-                  </button>
-
-                  <span style={{ 
-                    color: 'var(--text-secondary)',
-                    fontSize: '0.875rem'
-                  }}>
-                    Page {page + 1} of {totalPages}
-                  </span>
-
-                  <button
-                    onClick={() => setPage((prev) => Math.min(prev + 1, totalPages - 1))}
-                    disabled={page >= totalPages - 1}
-                    style={{
-                      padding: 'var(--spacing-sm) var(--spacing-md)',
-                      backgroundColor: 'var(--surface)',
-                      border: '1px solid var(--border)',
-                      borderRadius: 'var(--radius-md)',
-                      color: 'var(--text-primary)',
-                      cursor: page >= totalPages - 1 ? 'not-allowed' : 'pointer',
-                      opacity: page >= totalPages - 1 ? 0.5 : 1
-                    }}
-                  >
-                    Next
-                  </button>
-                </div>
-              )}
+              <DocumentList onRefresh={() => fetchFiles(page)} />
             </div>
           </>
         )}
