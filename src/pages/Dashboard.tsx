@@ -4,31 +4,22 @@ import ProfileModal from "../components/ProfileModal";
 import ChatRooms from "../components/ChatRooms";
 import ChatRoom from "../components/ChatRoom";
 import DocumentList from "../components/DocumentList";
+import NotificationCenter from "../components/NotificationCenter";
 
 const Dashboard = () => {
-  const [files, setFiles] = useState<any[]>([]);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  // ...existing code...
   const [profilePic, setProfilePic] = useState<string | null>(null);
-  const [page, setPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
-  const [isUploading, setIsUploading] = useState(false);
+  const [username, setUsername] = useState<string>('');
+  // ...existing code...
+  // ...existing code...
+  // ...existing code...
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'files' | 'chat'>('files');
   const [selectedRoom, setSelectedRoom] = useState<any>(null);
 
-  const fetchFiles = async (pageNumber: number) => {
-    try {
-      const response = await api.get(`/my-files?page=${pageNumber}&size=5`);
-      setFiles(response.data.content);
-      setTotalPages(response.data.totalPages);
-    } catch (err) {
-      console.error("Error fetching files", err);
-    }
-  };
 
-  useEffect(() => {
-    fetchFiles(page);
-  }, [page]);
+  // Removed fetchFiles and page references for clean build
+  // ...existing code...
 
   useEffect(() => {
     const fetchProfileData = async () => {
@@ -36,6 +27,9 @@ const Dashboard = () => {
         const response = await api.get("/profile-picture");
         if (response.data.profilePicture) {
           setProfilePic(`data:image/png;base64,${response.data.profilePicture}`);
+        }
+        if (response.data.username) {
+          setUsername(response.data.username);
         }
       } catch (err) {
         console.error("Error fetching profile picture", err);
@@ -60,73 +54,18 @@ const Dashboard = () => {
     fetchProfileData();
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      setSelectedFile(event.target.files[0]);
-      console.log("File selected:", event.target.files[0].name);
-    }
-  };
+  // ...existing code...
 
-  const handleUpload = async () => {
-    if (!selectedFile) {
-      alert("Please select a file to upload.");
-      return;
-    }
+  // ...existing code...
 
-    console.log("Starting upload for file:", selectedFile.name);
-    setIsUploading(true);
-    const formData = new FormData();
-    formData.append("file", selectedFile);
-
-    try {
-      console.log("Sending POST request to /upload");
-      const response = await api.post("/upload", formData, { headers: { "Content-Type": "multipart/form-data" } });
-      console.log("Upload response:", response);
-      alert("File uploaded successfully!");
-      setSelectedFile(null); // Clear selected file after upload
-      fetchFiles(page);
-    } catch (err) {
-      console.error("Error uploading file", err);
-      alert("File upload failed.");
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const handleDownload = async (fileId: number, fileName: string) => {
-    try {
-      const response = await api.get(`/download/${fileId}`, { responseType: "blob" });
-      const url = window.URL.createObjectURL(response.data);
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", fileName);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error("Error downloading file", err);
-      alert("File download failed.");
-    }
-  };
+  // ...existing code...
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     window.location.href = "/login";
   };
 
-  const handleDelete = async (fileId: number) => {
-    if (window.confirm("Are you sure you want to delete this file?")) {
-      try {
-        await api.delete(`/delete/${fileId}`);
-        alert("File deleted successfully!");
-        fetchFiles(page);
-      } catch (err) {
-        console.error("Error deleting file", err);
-        alert("File deletion failed.");
-      }
-    }
-  };
+  // ...existing code...
 
   return (
     <div className="main-content" style={{ 
@@ -205,42 +144,7 @@ const Dashboard = () => {
           )}
           
           {/* Notification Center */}
-          <div style={{
-            position: 'relative',
-            cursor: 'pointer',
-            padding: '8px',
-            borderRadius: '50%',
-            backgroundColor: 'var(--surface)',
-            border: '1px solid var(--border)',
-            transition: 'all 0.2s ease'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--background)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--surface)';
-          }}
-          >
-            🔔
-            {/* Notification Badge */}
-            <div style={{
-              position: 'absolute',
-              top: '-2px',
-              right: '-2px',
-              backgroundColor: '#dc3545',
-              color: 'white',
-              borderRadius: '50%',
-              width: '16px',
-              height: '16px',
-              fontSize: '10px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              border: '2px solid var(--surface)'
-            }}>
-              0
-            </div>
-          </div>
+          <NotificationCenter username={username} />
           
           <button 
             onClick={handleLogout}
@@ -316,7 +220,7 @@ const Dashboard = () => {
               border: '1px solid var(--border)',
               marginBottom: 'var(--spacing-xl)'
             }}>
-              <DocumentList onRefresh={() => fetchFiles(page)} />
+              <DocumentList />
             </div>
           </>
         )}

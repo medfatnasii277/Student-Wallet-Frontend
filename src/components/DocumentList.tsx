@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Document, DocumentSummary, DocumentService } from '../services/documentService';
+import { DocumentService } from '../services/documentService';
+import { DocumentSummary } from '../services/documentService';
 import ShareDocumentModal from './ShareDocumentModal';
 
 interface DocumentListProps {
@@ -42,11 +43,30 @@ const DocumentList: React.FC<DocumentListProps> = ({ onRefresh }) => {
           break;
         case 'shared':
           const sharedWithMe = await DocumentService.getDocumentsSharedWithMe();
-          setSharedDocuments(sharedWithMe);
+          // Normalize items: ensure `document` property exists
+          setSharedDocuments(sharedWithMe.map((s: any) => {
+            if (!s.document && (s.file || s.doc)) {
+              console.warn('Normalizing shared entry, found file/doc field instead of document', s);
+              return { ...s, document: s.file || s.doc };
+            }
+            if (!s.document) {
+              console.warn('Shared entry missing document', s);
+            }
+            return s;
+          }));
           break;
         case 'shared-by-me':
           const sharedByMe = await DocumentService.getDocumentsSharedByMe();
-          setSharedDocuments(sharedByMe);
+          setSharedDocuments(sharedByMe.map((s: any) => {
+            if (!s.document && (s.file || s.doc)) {
+              console.warn('Normalizing shared-by-me entry, found file/doc field instead of document', s);
+              return { ...s, document: s.file || s.doc };
+            }
+            if (!s.document) {
+              console.warn('Shared-by-me entry missing document', s);
+            }
+            return s;
+          }));
           break;
       }
     } catch (error) {
@@ -185,90 +205,181 @@ const DocumentList: React.FC<DocumentListProps> = ({ onRefresh }) => {
     </div>
   );
 
-  const renderSharedDocumentCard = (share: any, isSharedWithMe: boolean) => (
-    <div key={share.id} style={{
-      border: '1px solid #ddd',
-      borderRadius: '8px',
-      padding: '16px',
-      marginBottom: '16px',
-      backgroundColor: 'white',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-    }}>
-      <h5 style={{ margin: '0 0 12px 0', fontSize: '16px' }}>
-        {share.document.name}
-      </h5>
+  const renderSharedDocumentCard = (share: any, isSharedWithMe: boolean, index: number) => {
+    // Defensive guards: some shares may not include a `document` object
+    const doc = share && (share.document || share.file || share.doc) || null;
 
-      <div style={{ marginBottom: '12px', fontSize: '14px', color: '#666' }}>
-        <div>📄 {share.document.type || 'Unknown type'}</div>
-        <div>📅 {formatDate(share.document.uploadDate)}</div>
-        <div>👤 {isSharedWithMe ? share.owner.name : share.recipient.name}</div>
-        <div>🕒 Shared: {formatDate(share.sharedAt)}</div>
-        {share.message && (
-          <div style={{ marginTop: '8px', fontStyle: 'italic' }}>
-            💬 {share.message}
+    if (!doc) {
+      console.warn('Shared entry is missing a document:', share);
+
+      return (
+        <div key={share?.id || `share-missing-${index}`} style={{
+          border: '1px solid #ddd',
+          borderRadius: '8px',
+          padding: '16px',
+          marginBottom: '16px',
+          backgroundColor: 'white',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+        }}>
+          <h5 style={{ margin: '0 0 12px 0', fontSize: '16px' }}>
+            (Missing document)
+          </h5>
+
+          <div style={{ marginBottom: '12px', fontSize: '14px', color: '#666' }}>
+            <div>⚠️ This shared record doesn't contain the referenced document data.</div>
+            <div style={{ marginTop: '8px' }}>Shared entry id: {share?.id ?? 'unknown'}</div>
           </div>
-        )}
-      </div>
 
-      <div style={{ display: 'flex', gap: '8px' }}>
-        <button
-          onClick={() => handleDownload(share.document.id, share.document.name)}
-          style={{
-            padding: '6px 12px',
-            backgroundColor: '#007bff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '14px'
-          }}
-        >
-          📥 Download
-        </button>
-        {!isSharedWithMe && (
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={() => {
+                // Try to reload the list if a missing document appears due to stale data
+                loadDocuments();
+              }}
+              style={{
+                padding: '6px 12px',
+                backgroundColor: '#007bff',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '14px'
+              }}
+            >
+              🔁 Refresh
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // Safe property access below
+    const docId = doc.id;
+    const docName = doc.name || '(untitled)';
+    const docType = doc.type || 'Unknown type';
+    const uploadDate = doc.uploadDate || doc.uploadAt || new Date().toISOString();
+
+    const ownerName = isSharedWithMe ? share.owner?.name ?? '(unknown)' : share.recipient?.name ?? '(unknown)';
+
+    return (
+      <div key={share?.id || `share-${index}`} style={{
+        border: '1px solid #ddd',
+        borderRadius: '8px',
+        padding: '16px',
+        marginBottom: '16px',
+        backgroundColor: 'white',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+      }}>
+        <h5 style={{ margin: '0 0 12px 0', fontSize: '16px' }}>
+          {docName}
+        </h5>
+
+        <div style={{ marginBottom: '12px', fontSize: '14px', color: '#666' }}>
+          <div>📄 {docType}</div>
+          <div>📅 {formatDate(uploadDate)}</div>
+          <div>👤 {ownerName}</div>
+          <div>🕒 Shared: {formatDate(share.sharedAt || share.sharedDate || new Date().toISOString())}</div>
+          {share.message && (
+            <div style={{ marginTop: '8px', fontStyle: 'italic' }}>
+              💬 {share.message}
+            </div>
+          )}
+        </div>
+
+        <div style={{ display: 'flex', gap: '8px' }}>
           <button
-            onClick={() => handleRevokeAccess(share.document.id, share.recipient.email)}
+            onClick={() => handleDownload(docId, docName)}
             style={{
               padding: '6px 12px',
-              backgroundColor: '#ffc107',
-              color: 'black',
+              backgroundColor: '#007bff',
+              color: 'white',
               border: 'none',
               borderRadius: '4px',
               cursor: 'pointer',
               fontSize: '14px'
             }}
           >
-            🚫 Revoke Access
+            📥 Download
           </button>
-        )}
+          {!isSharedWithMe && (
+            <button
+              onClick={() => handleRevokeAccess(docId, share.recipient?.email || '')}
+              style={{
+                padding: '6px 12px',
+                backgroundColor: '#ffc107',
+                color: 'black',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '14px'
+              }}
+            >
+              🚫 Revoke Access
+            </button>
+          )}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div>
-      {/* Header with Share Button */}
+      {/* Header with Upload and Share Button */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: '20px'
+        marginBottom: '20px',
+        gap: '16px',
+        flexWrap: 'wrap'
       }}>
         <h3>Documents</h3>
-        <button
-          onClick={() => setIsShareModalOpen(true)}
-          style={{
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <label htmlFor="upload-file" style={{
             padding: '8px 16px',
-            backgroundColor: '#28a745',
+            backgroundColor: '#1976d2',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
             cursor: 'pointer',
-            fontSize: '14px'
-          }}
-        >
-          📤 Share Document
-        </button>
+            fontSize: '14px',
+            boxShadow: '0 2px 8px rgba(33,150,243,0.08)'
+          }}>
+            📁 Upload File
+            <input
+              id="upload-file"
+              type="file"
+              style={{ display: 'none' }}
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  try {
+                    await DocumentService.uploadDocument(file);
+                    alert('File uploaded successfully!');
+                    loadDocuments();
+                  } catch (err) {
+                    alert('File upload failed.');
+                  }
+                  e.target.value = '';
+                }
+              }}
+            />
+          </label>
+          <button
+            onClick={() => setIsShareModalOpen(true)}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: '#28a745',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}
+          >
+            📤 Share Document
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -339,9 +450,7 @@ const DocumentList: React.FC<DocumentListProps> = ({ onRefresh }) => {
                 No shared documents found
               </div>
             ) : (
-              sharedDocuments.map(share => 
-                renderSharedDocumentCard(share, activeTab === 'shared')
-              )
+              sharedDocuments.map((share, idx) => renderSharedDocumentCard(share, activeTab === 'shared', idx))
             )
           )}
         </div>
@@ -360,4 +469,4 @@ const DocumentList: React.FC<DocumentListProps> = ({ onRefresh }) => {
   );
 };
 
-export default DocumentList; 
+export default DocumentList;

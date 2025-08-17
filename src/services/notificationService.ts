@@ -30,7 +30,7 @@ export class NotificationService {
   private static notificationCallbacks: ((notification: Notification) => void)[] = [];
 
   // Initialize WebSocket connection
-  static initializeWebSocket(username: string, onNotification?: (notification: Notification) => void) {
+  static initializeWebSocket(_username: string, onNotification?: (notification: Notification) => void) {
     if (onNotification) {
       this.notificationCallbacks.push(onNotification);
     }
@@ -52,23 +52,48 @@ export class NotificationService {
       console.log('Connected to WebSocket');
       this.isConnected = true;
 
-      // Subscribe to user-specific notifications
-      this.stompClient?.subscribe(`/user/${username}/queue/notifications`, (message: IMessage) => {
+  // Subscribe to user-specific notifications
+  // Spring's user destination mapping sends user messages to a server-side path
+  // but clients should subscribe to the generic user queue destination '/user/queue/notifications'
+  this.stompClient?.subscribe(`/user/queue/notifications`, (message: IMessage) => {
         try {
-          const notification = JSON.parse(message.body);
+          const payload = JSON.parse(message.body);
+          // Normalize payload to Notification interface shape when possible
+          const notification: any = {
+            id: payload.id,
+            type: payload.type,
+            title: payload.title,
+            message: payload.message,
+            createdAt: payload.createdAt || new Date().toISOString(),
+            read: payload.read || false,
+            sender: payload.sender,
+            document: payload.document
+          };
+          console.log('Received notification via user queue:', notification);
           this.notificationCallbacks.forEach(callback => callback(notification));
         } catch (error) {
-          console.error('Error parsing notification:', error);
+          console.error('Error parsing notification:', error, message.body);
         }
       });
 
       // Subscribe to general notifications
       this.stompClient?.subscribe('/topic/notifications', (message: IMessage) => {
         try {
-          const notification = JSON.parse(message.body);
+          const payload = JSON.parse(message.body);
+          const notification: any = {
+            id: payload.id,
+            type: payload.type,
+            title: payload.title,
+            message: payload.message,
+            createdAt: payload.createdAt || new Date().toISOString(),
+            read: payload.read || false,
+            sender: payload.sender,
+            document: payload.document
+          };
+          console.log('Received notification via topic:', notification);
           this.notificationCallbacks.forEach(callback => callback(notification));
         } catch (error) {
-          console.error('Error parsing notification:', error);
+          console.error('Error parsing notification:', error, message.body);
         }
       });
     };
