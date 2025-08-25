@@ -45,16 +45,19 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ username }) => 
     }
   };
 
-  const markAsRead = (notificationId: number) => {
+  const markAsRead = async (notificationId: number) => {
     // Optimistically update UI
     setNotifications(prev =>
       prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
     );
     setUnreadCount(prev => Math.max(0, prev - 1));
-    // Call backend but don't wait for response
-    NotificationService.markNotificationAsRead(notificationId).catch(error => {
+    // Call backend and reload notifications
+    try {
+      await NotificationService.markNotificationAsRead(notificationId);
+      await loadNotifications();
+    } catch (error) {
       console.error('Error marking notification as read:', error);
-    });
+    }
   };
 
   const markAllAsRead = async () => {

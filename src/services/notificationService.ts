@@ -40,12 +40,14 @@ export class NotificationService {
     }
 
     const socket = new SockJS('http://localhost:8080/ws');
+    const token = localStorage.getItem('token');
     this.stompClient = new Client({
       webSocketFactory: () => socket as IStompSocket,
       debug: (str: string) => console.log(str),
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
+      connectHeaders: token ? { Authorization: `Bearer ${token}` } : {},
     });
 
     this.stompClient.onConnect = () => {
