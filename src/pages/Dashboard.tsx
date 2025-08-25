@@ -5,6 +5,7 @@ import ChatRooms from "../components/ChatRooms";
 import ChatRoom from "../components/ChatRoom";
 import DocumentList from "../components/DocumentList";
 import NotificationCenter from "../components/NotificationCenter";
+import FileSummary from "../components/FileSummary";
 
 const Dashboard = () => {
   // ...existing code...
@@ -14,7 +15,7 @@ const Dashboard = () => {
   // ...existing code...
   // ...existing code...
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'files' | 'chat'>('files');
+  const [activeTab, setActiveTab] = useState<'files' | 'chat' | 'summary'>('files');
   const [selectedRoom, setSelectedRoom] = useState<any>(null);
 
 
@@ -208,6 +209,22 @@ const Dashboard = () => {
           >
             💬 Chat Rooms
           </button>
+          <button
+            onClick={() => setActiveTab('summary')}
+            style={{
+              padding: 'var(--spacing-md) var(--spacing-lg)',
+              backgroundColor: activeTab === 'summary' ? 'var(--primary)' : 'transparent',
+              color: activeTab === 'summary' ? 'white' : 'var(--text-primary)',
+              border: 'none',
+              borderRadius: 'var(--radius-md) var(--radius-md) 0 0',
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              transition: 'all 0.2s ease'
+            }}
+          >
+            📝 File Summary
+          </button>
         </div>
 
         {/* Files Tab */}
@@ -256,6 +273,20 @@ const Dashboard = () => {
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {/* File Summary Tab */}
+        {activeTab === 'summary' && (
+          <div style={{
+            backgroundColor: 'var(--surface)',
+            borderRadius: 'var(--radius-lg)',
+            padding: 'var(--spacing-xl)',
+            border: '1px solid var(--border)',
+            marginBottom: 'var(--spacing-xl)'
+          }}>
+            {/* FileSummary component will be rendered here */}
+            <FileSummary />
           </div>
         )}
       </div>
