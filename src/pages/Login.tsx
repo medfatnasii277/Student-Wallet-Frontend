@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import axios from 'axios';
 
 const Login = () => {
@@ -23,7 +24,12 @@ const Login = () => {
 
   return (
     <div className="main-content">
-      <div className="auth-container">
+      <motion.div 
+        className="auth-container"
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+      >
         <div className="auth-header">
           <h1>Welcome Back!</h1>
           <p>Sign in to access your student wallet</p>
@@ -60,12 +66,19 @@ const Login = () => {
               placeholder="Enter your password"
             />
           </div>
-          <button type="submit" className="btn-primary">Sign In</button>
+          <motion.button 
+            type="submit" 
+            className="btn-primary"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            Sign In
+          </motion.button>
         </form>
         <div style={{ marginTop: 'var(--spacing-lg)', textAlign: 'center' }}>
           <p>Don't have an account? <Link to="/signup" className="nav-link">Sign Up</Link></p>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

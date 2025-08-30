@@ -2,7 +2,15 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(135deg, var(--background) 0%, var(--accent-light) 100%);
+  background: linear-gradient(135deg, #fefefe 0%, #f0f9ff 25%, #fef3c7 50%, #f0f9ff 75%, #fefefe 100%);
+  background-size: 400% 400%;
+  animation: gradientShift 20s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 .app-container {

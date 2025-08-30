@@ -1,0 +1,35 @@
+.animated-bg {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  background: transparent;
+}
+
+.animated-bg svg {
+  width: 100vw;
+  height: 100vh;
+  display: block;
+}
+
+@keyframes moveWaves {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-200px); }
+}
+
+.wave {
+  animation: moveWaves 12s linear infinite;
+  opacity: 0.18;
+}
+
+.wave2 {
+  animation: moveWaves 18s linear infinite;
+  opacity: 0.12;
+}
+
+.wave3 {
+  animation: moveWaves 24s linear infinite;
+  opacity: 0.10;
+}

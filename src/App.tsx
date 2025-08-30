@@ -3,12 +3,14 @@ import Login from './pages/Login';
 import SignUp from './pages/SignUp';
 import Dashboard from './pages/Dashboard';
 import AuthGuard from './components/AuthGuard';
+import AnimatedBackground from './components/AnimatedBackground';
 import './App.css';
 
 const App = () => {
   return (
     <div id="root">
       <div className="app-container">
+        <AnimatedBackground />
         <Router>
           <Routes>
             <Route path="/login" element={<Login />} />

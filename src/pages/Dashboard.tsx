@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import api from "../services/api";
 import ProfileModal from "../components/ProfileModal";
 import ChatRooms from "../components/ChatRooms";
@@ -69,101 +70,152 @@ const Dashboard = () => {
   // ...existing code...
 
   return (
-    <div className="main-content" style={{ 
-      backgroundColor: 'var(--background)',
-      minHeight: '100vh'
-    }}>
+    <motion.div 
+      className="main-content" 
+      style={{ 
+        minHeight: '100vh',
+        backgroundColor: 'transparent'
+      }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
       {/* Top Bar */}
-      <div style={{
-        backgroundColor: 'var(--surface)',
-        borderBottom: '1px solid var(--border)',
-        padding: 'var(--spacing-md) var(--spacing-xl)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        position: 'sticky',
-        top: 0,
-        zIndex: 100
-      }}>
+      <motion.div 
+        style={{
+          background: 'linear-gradient(135deg, rgba(254, 254, 254, 0.1) 0%, rgba(240, 249, 255, 0.15) 25%, rgba(254, 243, 199, 0.1) 50%, rgba(240, 249, 255, 0.15) 75%, rgba(254, 254, 254, 0.1) 100%)',
+          backdropFilter: 'blur(25px)',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+          padding: 'var(--spacing-sm) var(--spacing-xl)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          position: 'sticky',
+          top: 0,
+          zIndex: 100,
+          boxShadow: '0 2px 12px rgba(0, 0, 0, 0.06)',
+          WebkitBackdropFilter: 'blur(25px)', // Safari support
+          minHeight: '56px',
+          transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
+        }}
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        whileHover={{
+          background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(22, 163, 74, 0.2) 25%, rgba(34, 197, 94, 0.15) 50%, rgba(22, 163, 74, 0.2) 75%, rgba(34, 197, 94, 0.15) 100%)',
+          boxShadow: '0 4px 20px rgba(34, 197, 94, 0.15)',
+          borderBottom: '1px solid rgba(34, 197, 94, 0.3)'
+        }}
+      >
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
-          <h1 style={{ 
-            fontSize: '1.5rem', 
-            fontWeight: 500, 
-            color: 'var(--text-primary)',
-            margin: 0
-          }}>
-            Student Wallet
-          </h1>
+          <motion.div 
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 'var(--spacing-sm)',
+              cursor: 'pointer'
+            }}
+            whileHover={{ scale: 1.02 }}
+            transition={{ type: "spring", stiffness: 300 }}
+          >
+            <motion.h1 
+              style={{ 
+                fontSize: '1.8rem', 
+                fontWeight: 800, 
+                color: 'var(--primary)',
+                margin: 0,
+                background: 'linear-gradient(135deg, var(--primary), var(--accent))',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                letterSpacing: '-0.02em',
+                textShadow: '0 2px 4px rgba(0,0,0,0.1)'
+              }}
+              whileHover={{ scale: 1.05 }}
+            >
+              Student Wallet
+            </motion.h1>
+          </motion.div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-lg)' }}>
           {profilePic ? (
-            <img
+            <motion.img
               src={profilePic}
               alt="Profile"
               onClick={() => setIsProfileModalOpen(true)}
               style={{ 
-                width: "32px", 
-                height: "32px", 
+                width: "36px", 
+                height: "36px", 
                 borderRadius: "50%", 
                 objectFit: "cover",
                 cursor: "pointer",
-                border: "2px solid transparent",
-                transition: "border-color 0.2s ease"
+                border: "2px solid rgba(255, 255, 255, 0.3)",
+                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+                transition: "all 0.3s ease"
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "var(--primary)";
+              whileHover={{ 
+                scale: 1.1,
+                boxShadow: "0 4px 15px rgba(0, 0, 0, 0.15)"
               }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "transparent";
-              }}
+              whileTap={{ scale: 0.95 }}
             />
           ) : (
-            <div
+            <motion.div
               onClick={() => setIsProfileModalOpen(true)}
               style={{ 
-                width: "32px", 
-                height: "32px", 
+                width: "36px", 
+                height: "36px", 
                 borderRadius: "50%", 
-                backgroundColor: "var(--border)",
+                background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.8), rgba(244, 114, 182, 0.8))',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '1rem',
+                fontSize: '1.1rem',
                 cursor: "pointer",
-                border: "2px solid transparent",
-                transition: "border-color 0.2s ease"
+                border: "2px solid rgba(255, 255, 255, 0.3)",
+                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+                color: 'white',
+                fontWeight: 'bold'
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "var(--primary)";
+              whileHover={{ 
+                scale: 1.1,
+                boxShadow: "0 4px 15px rgba(0, 0, 0, 0.15)"
               }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "transparent";
-              }}
+              whileTap={{ scale: 0.95 }}
             >
               👤
-            </div>
+            </motion.div>
           )}
           
           {/* Notification Center */}
           <NotificationCenter username={username} />
           
-          <button 
+          <motion.button 
             onClick={handleLogout}
             style={{
-              padding: 'var(--spacing-sm) var(--spacing-md)',
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--border)',
-              backgroundColor: 'transparent',
-              color: 'var(--text-primary)',
+              padding: '6px var(--spacing-sm)',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              backgroundColor: 'rgba(239, 68, 68, 0.15)',
+              color: 'rgba(239, 68, 68, 0.9)',
               cursor: 'pointer',
-              fontSize: '0.875rem',
-              fontWeight: '500'
+              fontSize: '0.8rem',
+              fontWeight: '600',
+              backdropFilter: 'blur(10px)',
+              transition: 'all 0.3s ease'
             }}
+            whileHover={{ 
+              scale: 1.05, 
+              backgroundColor: 'rgba(239, 68, 68, 0.8)', 
+              color: 'white',
+              boxShadow: '0 4px 15px rgba(239, 68, 68, 0.3)'
+            }}
+            whileTap={{ scale: 0.95 }}
           >
             Logout
-          </button>
+          </motion.button>
         </div>
-      </div>
+      </motion.div>
 
       <div style={{ 
         maxWidth: '1200px', 
@@ -177,7 +229,7 @@ const Dashboard = () => {
           marginBottom: 'var(--spacing-xl)',
           borderBottom: '1px solid var(--border)'
         }}>
-          <button
+          <motion.button
             onClick={() => setActiveTab('files')}
             style={{
               padding: 'var(--spacing-md) var(--spacing-lg)',
@@ -190,10 +242,12 @@ const Dashboard = () => {
               fontWeight: 500,
               transition: 'all 0.2s ease'
             }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
             📁 Files
-          </button>
-          <button
+          </motion.button>
+          <motion.button
             onClick={() => setActiveTab('chat')}
             style={{
               padding: 'var(--spacing-md) var(--spacing-lg)',
@@ -206,10 +260,12 @@ const Dashboard = () => {
               fontWeight: 500,
               transition: 'all 0.2s ease'
             }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
             💬 Chat Rooms
-          </button>
-          <button
+          </motion.button>
+          <motion.button
             onClick={() => setActiveTab('summary')}
             style={{
               padding: 'var(--spacing-md) var(--spacing-lg)',
@@ -222,73 +278,100 @@ const Dashboard = () => {
               fontWeight: 500,
               transition: 'all 0.2s ease'
             }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
             📝 File Summary
-          </button>
+          </motion.button>
         </div>
 
-        {/* Files Tab */}
-        {activeTab === 'files' && (
-          <>
-            <div style={{
-              backgroundColor: 'var(--surface)',
-              borderRadius: 'var(--radius-lg)',
-              padding: 'var(--spacing-xl)',
-              border: '1px solid var(--border)',
-              marginBottom: 'var(--spacing-xl)'
-            }}>
-              <DocumentList />
-            </div>
-          </>
-        )}
+        {/* Tab Content */}
+        <AnimatePresence mode="wait">
+          {/* Files Tab */}
+          {activeTab === 'files' && (
+            <motion.div
+              key="files"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div style={{
+                backgroundColor: 'var(--surface)',
+                borderRadius: 'var(--radius-lg)',
+                padding: 'var(--spacing-xl)',
+                border: '1px solid var(--border)',
+                marginBottom: 'var(--spacing-xl)'
+              }}>
+                <DocumentList />
+              </div>
+            </motion.div>
+          )}
 
-        {/* Chat Tab */}
-        {activeTab === 'chat' && (
-          <div style={{ display: 'flex', gap: 'var(--spacing-xl)', height: '600px' }}>
-            <div style={{ flex: '1', maxWidth: '400px' }}>
-              <ChatRooms 
-                onRoomSelect={setSelectedRoom}
-                selectedRoom={selectedRoom}
-              />
-            </div>
-            <div style={{ flex: '2' }}>
-              {selectedRoom ? (
-                <ChatRoom 
-                  room={selectedRoom}
-                  onBack={() => setSelectedRoom(null)}
-                />
-              ) : (
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  height: '100%',
-                  backgroundColor: 'var(--surface)',
-                  borderRadius: 'var(--radius-lg)',
-                  border: '1px solid var(--border)',
-                  color: 'var(--text-secondary)',
-                  fontSize: '1.125rem'
-                }}>
-                  Select a chat room to start messaging
+          {/* Chat Tab */}
+          {activeTab === 'chat' && (
+            <motion.div
+              key="chat"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div style={{ display: 'flex', gap: 'var(--spacing-xl)', height: '600px' }}>
+                <div style={{ flex: '1', maxWidth: '400px' }}>
+                  <ChatRooms 
+                    onRoomSelect={setSelectedRoom}
+                    selectedRoom={selectedRoom}
+                  />
                 </div>
-              )}
-            </div>
-          </div>
-        )}
+                <div style={{ flex: '2' }}>
+                  {selectedRoom ? (
+                    <ChatRoom 
+                      room={selectedRoom}
+                      onBack={() => setSelectedRoom(null)}
+                    />
+                  ) : (
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      height: '100%',
+                      backgroundColor: 'var(--surface)',
+                      borderRadius: 'var(--radius-lg)',
+                      border: '1px solid var(--border)',
+                      color: 'var(--text-secondary)',
+                      fontSize: '1.125rem'
+                    }}>
+                      Select a chat room to start messaging
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
 
-        {/* File Summary Tab */}
-        {activeTab === 'summary' && (
-          <div style={{
-            backgroundColor: 'var(--surface)',
-            borderRadius: 'var(--radius-lg)',
-            padding: 'var(--spacing-xl)',
-            border: '1px solid var(--border)',
-            marginBottom: 'var(--spacing-xl)'
-          }}>
-            {/* FileSummary component will be rendered here */}
-            <FileSummary />
-          </div>
-        )}
+          {/* File Summary Tab */}
+          {activeTab === 'summary' && (
+            <motion.div
+              key="summary"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div style={{
+                backgroundColor: 'var(--surface)',
+                borderRadius: 'var(--radius-lg)',
+                padding: 'var(--spacing-xl)',
+                border: '1px solid var(--border)',
+                marginBottom: 'var(--spacing-xl)'
+              }}>
+                {/* FileSummary component will be rendered here */}
+                <FileSummary />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Profile Modal */}
@@ -297,7 +380,7 @@ const Dashboard = () => {
         onClose={() => setIsProfileModalOpen(false)}
         onProfileUpdate={handleProfileUpdate}
       />
-    </div>
+    </motion.div>
   );
 };
 

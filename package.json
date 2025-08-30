@@ -14,6 +14,7 @@
     "@types/react-router-dom": "^5.3.3",
     "axios": "^1.6.7",
     "bootstrap": "^5.2.3",
+    "framer-motion": "^12.23.12",
     "jspdf": "^3.0.1",
     "lucide-react": "^0.263.1",
     "react": "^18.2.0",
